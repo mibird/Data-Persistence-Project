@@ -3,14 +3,17 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using System.IO;
 
 public class MainManager : MonoBehaviour
 {
     public Brick BrickPrefab;
     public int LineCount = 6;
     public Rigidbody Ball;
+    public int bestScore;
 
     public Text ScoreText;
+    public Text bestScoreText;
     public GameObject GameOverText;
     
     private bool m_Started = false;
@@ -36,6 +39,7 @@ public class MainManager : MonoBehaviour
                 brick.onDestroyed.AddListener(AddPoint);
             }
         }
+        LoadScore();
     }
 
     private void Update()
@@ -72,5 +76,37 @@ public class MainManager : MonoBehaviour
     {
         m_GameOver = true;
         GameOverText.SetActive(true);
+        if(m_Points > bestScore)
+        {
+            SaveScore();
+        }
+        LoadScore();
+    }
+    [System.Serializable]
+    class SaveData
+    {
+        public int bestScore;
+    }
+    public void SaveScore()
+    {
+        SaveData data = new SaveData();
+        bestScore = m_Points;
+        data.bestScore = bestScore;
+        string json = JsonUtility.ToJson(data);
+        File.WriteAllText(Application.persistentDataPath + "/savefile.json", json);
+
+        Debug.Log("Data Saved" + data.bestScore);
+    }
+    public void LoadScore()
+    {
+        string path = Application.persistentDataPath + "/savefile.json";
+        if (File.Exists(path))
+        {
+            string json = File.ReadAllText(path);
+            SaveData data = JsonUtility.FromJson<SaveData> (json);
+            bestScore = data.bestScore;
+            bestScoreText.text = "Best Score:"+bestScore;
+            Debug.Log("Score Loaded");
+        }
     }
 }
